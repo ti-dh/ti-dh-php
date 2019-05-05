@@ -11,7 +11,7 @@ $ret = $curl->get( 'https://t.ti-node.com/dh/getdhbasedata' );
 $ret = json_decode( $ret, true );
 $p = $ret['p'];
 $g = $ret['g'];
-$server_number = $ret['server_number'];
+$server_number = $ret['server_num'];
 
 // 2、第二步，根据服务器获取到的数据计算出client-number
 $process_client_number = gmp_powm( $g, $client_number, $p );
