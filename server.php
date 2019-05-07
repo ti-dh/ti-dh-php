@@ -19,10 +19,12 @@ if (preg_match('/getdhbasedata/', $uri['path'])) {
 
     $dh = new Dh();
     $key = $dh->postdhclientdata($postData);
-    if(!$key){
+    if (!$key) {
         echo "post params error";
     } else {
-        echo json_encode(['key' => $key], JSON_UNESCAPED_UNICODE);
+        echo json_encode(array(
+            'key' => $key
+        ), JSON_UNESCAPED_UNICODE);
     }
 } else {
     echo "uri error";
