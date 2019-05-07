@@ -10,3 +10,9 @@ DH算法的API端，DH是一种利用非对称协商对称密钥的交换算法�
 // 1.cd example
 // 2.在终端命令行下执行：php client
 ```
+___
+新增的server.php支持直接在本地起一个DH服务  例如你要起在8877端口 在当前目录执行
+```php
+php -S 0.0.0.0:8877 server.php
+```
+你可以把example里面的请求地址```https://t.ti-node.com/```替换成```http://127.0.0.1:8877```完全在本地试验DH算法
