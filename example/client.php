@@ -3,21 +3,24 @@ require __DIR__ . '/vendor/autoload.php';
 use \Curl\Curl;
 $curl = new Curl();
 
+$api_host = 'http://127.0.0.1:8877/';
+
 // 初始化客户端数据
 $client_number = mt_rand( 100000, 999999 );
 
 // 1、第一步，获取服务器的p、g和server_number
-$ret = $curl->get( 'https://t.ti-node.com/dh/getdhbasedata' );
+$ret = $curl->get( $api_host.'getdhbasedata' );
 $ret = json_decode( $ret, true );
 $p = $ret['p'];
 $g = $ret['g'];
-$server_number = $ret['server_num'];
+$server_number = $ret['server_number'];
+//print_r( $ret );
 
 // 2、第二步，根据服务器获取到的数据计算出client-number
 $process_client_number = gmp_powm( $g, $client_number, $p );
 
 // 3、第三步，将计算过后的client-number发送给服务器
-$ret = $curl->post( 'https://t.ti-node.com/dh/postdhclientdata', array(
+$ret = $curl->post( $api_host.'postdhclientdata', array(
   'client_number' => gmp_strval( $process_client_number ),
 ) );
 $ret = json_decode( $ret, true );

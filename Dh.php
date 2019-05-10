@@ -18,14 +18,6 @@ class Dh {
   // server端的Bob number，也就是A
   private $server_number = null;
 
-  // 存储p、g、server_number的cache file
-  private $cache_file = "dh_cache_file.json";
-
-  public function __construct() {
-    $this->cache_file = dirname( __FILE__ ).'/'.$this->cache_file;
-    $this->_genereatebase();
-  }
-
   /*
    * @desc : 生成p、g和server_number( 也就是Bob )
    * @return : array(
@@ -34,33 +26,29 @@ class Dh {
                  server_number => A
                )
    */
-  public function getdhbasedata() {
+  public function init() {
+    // 初始化p g 和 server-number
+    $this->_genereate_base_info();
     // 根据p, g, server得到A
-    // processed_server_number = ( $this->g )^( $this->server_number ) mod ( $this->p )
-    $processed_server_number = gmp_powm( $this->g, $this->server_number, $this->p );
-    // 然后将p 和 g以及processed_server_number 返回
+    $processed_server_number = $this->_process_server_key();
+    // 然后将p 和 g以及server_number和processed_server_number 返回
     return array( 
       'p' => $this->p,
       'g' => $this->g,
-      'server_number' => gmp_strval( $processed_server_number ), 
+      'server_number'           => $this->server_number,
+      'processed_server_number' => gmp_strval( $processed_server_number ), 
     );
   }
 
   /*
-   * @desc : 接受来自与客户端dh数据
-   * @param : array(
-                client_number => Alice
-                server_number => Alice
-              )
+   * @desc  : 接受来自与客户端dh数据
+   * @param : client_number，来自于客户端的随机数字
+   * @param : server_number，来自于客户端的随机数字
    */
-  public function postdhclientdata( array $dh_client_data ) {
-    // client_number 和 server_number 两个参数是必备的！
-    if ( !isset( $dh_client_data['client_number'] ) && !isset( $da_client_data['server_number'] ) ) {
-      return false;
-    }
+  public function compute_share_key( $client_number, $server_number, $p ) {
     // 接受client_number（实际上是经过了client客户端处理过后的client_number）
     // 利用client_number,server_number和p计算出公共密钥key
-    $key = gmp_powm( $dh_client_data['client_number'], $this->server_number, $this->p ); 
+    $key = gmp_powm( $client_number, $server_number, $p ); 
     // 这个key便是计算出出来的用于对称加解密的公钥
     return gmp_strval( $key );
   }
@@ -68,20 +56,7 @@ class Dh {
   /*
    * @desc : 目前先暂时根据固定的大质数生成p和对应的base数字g
    */
-  private function _genereatebase() {
-    // 先读取文件缓存中的p、g和server_number
-    // 并且，如果说文件缓存中的数据是可用的
-    $file_exists = is_file( $this->cache_file );
-    if ( $file_exists ) {
-      $json_cache_data = file_get_contents( $this->cache_file );
-      $cache_data      = json_decode( $json_cache_data, true );
-      if ( !empty( $cache_data['p'] ) && !empty( $cache_data['g'] ) && !empty( $cache_data['server_number'] ) ) {
-        $this->server_number = $cache_data['server_number'];
-        $this->g = $cache_data['g'];
-        $this->p = $cache_data['p'];
-        return;
-      }
-    }
+  private function _genereate_base_info() {
     // 第一步：根据p_source生成服务器当前固定的p
     $p = gmp_strval( gmp_init( $this->p_source ) ); 
     // 第二步：根据上一步随机出来的质数p，按照算法推出基数g.
@@ -93,19 +68,17 @@ class Dh {
         $primitive_flag = 1;
       }
     }
-    $server_number = mt_rand( 100, 100000 );  
-    // 将p、g和server_number记录到文件中
-    if ( !file_put_contents( $this->cache_file, json_encode( array(
-      'p' => $p,
-      'g' => $g,
-      'server_number' => $server_number,
-    ) ) ) ) {
-      exit('Write p,g,server_number to cache file fail');
-    }
     // 随机一个server_number
-    $this->server_number = $server_number;
+    $this->server_number = mt_rand( 100, 100000 );
     $this->g = $g;
     $this->p = $p;
+  }
+  /*
+   * @desc : 返回已处理的服务端server-number
+   */
+  private function _process_server_key() {
+    $processed_server_number = gmp_powm( $this->g, $this->server_number, $this->p );
+    return $processed_server_number;
   }
 
   /*
