@@ -18,6 +18,13 @@ class Dh {
   // server端的Bob number，也就是A
   private $server_number = null;
 
+  public function __construct() {
+    // 检测gmp扩展是否存在 
+    if ( !extension_loaded( 'gmp' ) ) {
+      exit( 'GMP扩展不存在，请确保您的PHP环境中是否配置了GMP扩展' );
+    }
+  }
+
   /*
    * @desc : 生成p、g和server_number( 也就是Bob )
    * @return : array(
